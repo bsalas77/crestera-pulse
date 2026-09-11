@@ -28,7 +28,7 @@ describe("LoginPage", () => {
     renderLoginPage();
     expect(screen.getByText("Username")).toBeInTheDocument();
     expect(screen.getByText("Password")).toBeInTheDocument();
-    expect(screen.getByText(/demo users/i)).toBeInTheDocument();
+    expect(screen.getByText(/usernames: ciso, cio, cro, board/i)).toBeInTheDocument();
   });
 
   it("submits the entered credentials to the API client", async () => {

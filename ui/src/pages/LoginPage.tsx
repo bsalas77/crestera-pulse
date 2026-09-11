@@ -61,7 +61,9 @@ export function LoginPage() {
         <button type="submit" disabled={submitting}>
           {submitting ? "Signing in..." : "Sign in"}
         </button>
-        <div className="login-hint">Demo users: ciso / cio / cro / board — password: password</div>
+        <div className="login-hint">
+          Every demo account's password is <strong>password</strong>. Usernames: ciso, cio, cro, board.
+        </div>
       </form>
     </div>
   );
