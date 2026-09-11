@@ -5,6 +5,13 @@ import { Table } from "../components/Table";
 import { TimeSeriesChart } from "../components/TimeSeriesChart";
 import { getCisoDashboard } from "../services/api";
 
+const SEVERITY_COLORS: Record<string, string> = {
+  Critical: "#7f1d1d",
+  High: "#dc2626",
+  Medium: "#d97706",
+  Low: "#16a34a",
+};
+
 interface CisoData {
   securityPostureScore: number;
   securityPostureTrend: { period: string; value: number }[];
@@ -49,7 +56,7 @@ export function CisoDashboard() {
           <h3>Vulnerabilities by Criticality</h3>
           <BarChart
             data={data.vulnerabilitiesByCriticality.map((v) => ({ label: v.severity, value: v.count }))}
-            color="#b91c1c"
+            colorByLabel={SEVERITY_COLORS}
           />
         </div>
       </div>
