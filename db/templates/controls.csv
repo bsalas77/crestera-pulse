@@ -1,0 +1,2 @@
+external_id,name,framework,type,effectiveness_score,owner
+C-001,Endpoint Detection & Response,NIST,detective,82,CISO

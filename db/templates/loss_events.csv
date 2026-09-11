@@ -1,0 +1,2 @@
+type,amount,currency,date,cause,business_unit
+fraud,92000,USD,2026-08-19,Card-not-present fraud ring,Retail Banking

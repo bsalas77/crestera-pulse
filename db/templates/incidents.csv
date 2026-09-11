@@ -1,0 +1,2 @@
+external_id,type,severity,start_time,end_time,impact_description,impact_financial,impact_regulatory,business_unit
+INC-001,security,high,2026-06-02 03:14:00,2026-06-02 07:40:00,Phishing-driven credential compromise.,12000,false,Retail Banking

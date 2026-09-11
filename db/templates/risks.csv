@@ -1,0 +1,2 @@
+external_id,category,title,description,inherent_score,residual_score,status,owner,business_unit
+R-001,cyber,Unpatched endpoints,Branch endpoints running outdated OS versions.,8.5,5.2,open,CISO,Retail Banking

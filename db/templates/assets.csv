@@ -1,0 +1,2 @@
+external_id,name,type,criticality,environment,business_unit,owner
+AST-001,Core Banking Server,server,5,prod,Retail Banking,IT Infrastructure
