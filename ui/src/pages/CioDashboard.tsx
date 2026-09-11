@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
 import { BarChart } from "../components/BarChart";
 import { MetricCard } from "../components/MetricCard";
+import { Table } from "../components/Table";
 import { TimeSeriesChart } from "../components/TimeSeriesChart";
 import { getCioDashboard } from "../services/api";
+
+interface Application {
+  id: string;
+  name: string;
+  category: string;
+  rtoHours: number | null;
+  rpoHours: number | null;
+  slaUptimeTarget: number;
+}
 
 interface CioData {
   coreBankingUptime: { current: number; trend: { period: string; value: number }[] };
@@ -10,6 +20,8 @@ interface CioData {
   changeRisk: { changeFailureRate: number; incidentsLinkedToChanges: number };
   techDebtSummary: { legacyAssetCount: number; endOfSupportAssetCount: number };
   capacityMetrics: { cpuUtilization: number; memoryUtilization: number; storageUtilization: number };
+  applicationPortfolio: Application[];
+  assetsByCriticality: { criticality: number; count: number }[];
 }
 
 export function CioDashboard() {
@@ -68,6 +80,31 @@ export function CioDashboard() {
         <div className="grid-2">
           <MetricCard title="Legacy Assets" value={data.techDebtSummary.legacyAssetCount} tone="warn" />
           <MetricCard title="End-of-Support Risks" value={data.techDebtSummary.endOfSupportAssetCount} tone="warn" />
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <h3>Application Portfolio</h3>
+          <Table
+            columns={[
+              { header: "Application", accessor: (a) => a.name },
+              { header: "Category", accessor: (a) => a.category },
+              { header: "RTO (h)", accessor: (a) => a.rtoHours ?? "—" },
+              { header: "RPO (h)", accessor: (a) => a.rpoHours ?? "—" },
+              { header: "SLA Target", accessor: (a) => `${a.slaUptimeTarget}%` },
+            ]}
+            rows={data.applicationPortfolio}
+            keyFn={(a) => a.id}
+            emptyLabel="No applications recorded"
+          />
+        </div>
+        <div className="card">
+          <h3>Assets by Criticality</h3>
+          <BarChart
+            data={data.assetsByCriticality.map((a) => ({ label: `Level ${a.criticality}`, value: a.count }))}
+            color="#2563eb"
+          />
         </div>
       </div>
     </div>

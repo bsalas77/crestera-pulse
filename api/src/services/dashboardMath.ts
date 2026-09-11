@@ -13,6 +13,18 @@ export interface TrendPoint {
   value: number;
 }
 
+/** Sums an `amount` column into monthly buckets, sorted chronologically. */
+export function sumAmountByMonth(rows: { date: string | Date; amount: string | number }[]): TrendPoint[] {
+  const totals = rows.reduce<Record<string, number>>((acc, r) => {
+    const period = toPeriod(r.date);
+    acc[period] = (acc[period] ?? 0) + toNumber(r.amount);
+    return acc;
+  }, {});
+  return Object.entries(totals)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([period, value]) => ({ period, value }));
+}
+
 /**
  * Seed data only carries a single point-in-time value per metric.
  * Trends are synthesized around that value so charts have something to render;

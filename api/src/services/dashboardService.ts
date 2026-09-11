@@ -1,5 +1,5 @@
 import { query, queryOne } from "../db/pool";
-import { synthesizeTrend, toNumber, toPeriod } from "./dashboardMath";
+import { sumAmountByMonth, synthesizeTrend, toNumber } from "./dashboardMath";
 
 interface MetricRow {
   id: string;
@@ -17,23 +17,45 @@ async function getMetricByName(name: string): Promise<MetricRow | null> {
   return queryOne<MetricRow>("SELECT * FROM metrics WHERE name = $1 LIMIT 1", [name]);
 }
 
+/** Average control effectiveness_score per framework — shared by the CISO and CRO views. */
+async function getControlEffectivenessByFramework(): Promise<Record<string, number>> {
+  const controls = await query<{ framework: string; effectiveness_score: string }>(
+    "SELECT framework, effectiveness_score FROM controls"
+  );
+
+  const totals = controls.reduce<Record<string, { sum: number; count: number }>>((acc, c) => {
+    const bucket = acc[c.framework] ?? { sum: 0, count: 0 };
+    bucket.sum += toNumber(c.effectiveness_score);
+    bucket.count += 1;
+    acc[c.framework] = bucket;
+    return acc;
+  }, {});
+
+  return Object.fromEntries(
+    Object.entries(totals).map(([framework, { sum, count }]) => [framework, Math.round((sum / count) * 10) / 10])
+  );
+}
+
 export async function getCisoDashboard() {
-  const [postureMetric, incidents, cyberRisks, regulatoryMetrics, mttd, mttr] = await Promise.all([
-    getMetricByName("Security Posture Score"),
-    query<{ severity: string; type: string }>("SELECT severity, type FROM incidents WHERE type = 'security'"),
-    query(
-      `SELECT r.* FROM risks r
-       JOIN organizations o ON o.id = r.business_unit_id
-       WHERE r.category = 'cyber' AND (o.name ILIKE '%vendor%' OR o.name ILIKE '%third-party%')`
-    ),
-    query(
-      `SELECT m.* FROM metrics m
-       JOIN metric_dimensions md ON md.metric_id = m.id
-       WHERE m.category = 'security' AND md.key = 'framework' AND md.value = 'FFIEC'`
-    ),
-    getMetricByName("Mean Time to Detect"),
-    getMetricByName("Mean Time to Respond"),
-  ]);
+  const [postureMetric, incidents, cyberRisks, topCyberRisks, controlEffectivenessByFramework, regulatoryMetrics, mttd, mttr] =
+    await Promise.all([
+      getMetricByName("Security Posture Score"),
+      query<{ severity: string; type: string }>("SELECT severity, type FROM incidents WHERE type = 'security'"),
+      query(
+        `SELECT r.* FROM risks r
+         JOIN organizations o ON o.id = r.business_unit_id
+         WHERE r.category = 'cyber' AND (o.name ILIKE '%vendor%' OR o.name ILIKE '%third-party%')`
+      ),
+      query("SELECT * FROM risks WHERE category = 'cyber' ORDER BY residual_score DESC NULLS LAST LIMIT 5"),
+      getControlEffectivenessByFramework(),
+      query(
+        `SELECT m.* FROM metrics m
+         JOIN metric_dimensions md ON md.metric_id = m.id
+         WHERE m.category = 'security' AND md.key = 'framework' AND md.value = 'FFIEC'`
+      ),
+      getMetricByName("Mean Time to Detect"),
+      getMetricByName("Mean Time to Respond"),
+    ]);
 
   const vulnerabilityMetrics = await query<MetricRow>(
     "SELECT * FROM metrics WHERE name ILIKE '%Vulnerabilities Open%' ORDER BY name"
@@ -60,6 +82,8 @@ export async function getCisoDashboard() {
       mttr: toNumber(mttr?.value),
     },
     thirdPartyCyberRiskSummary: cyberRisks,
+    topCyberRisks,
+    controlEffectiveness: { averageByFramework: controlEffectivenessByFramework },
     regulatoryMetrics,
   };
 }
@@ -78,10 +102,16 @@ export async function getCioDashboard() {
       getMetricByName("Storage Utilization"),
     ]);
 
-  const [itIncidents, legacyAssets, eolRisks] = await Promise.all([
+  const [itIncidents, legacyAssets, eolRisks, applications, assetsByCriticality] = await Promise.all([
     query<{ id: string }>("SELECT id FROM incidents WHERE type = 'it'"),
     query<{ id: string }>("SELECT id FROM assets WHERE name ILIKE '%legacy%'"),
     query<{ id: string }>("SELECT id FROM risks WHERE title ILIKE '%EOL%' OR title ILIKE '%end-of-support%'"),
+    query<{ id: string; name: string; category: string; rto_hours: number | null; rpo_hours: number | null; sla_uptime_target: string | null }>(
+      "SELECT id, name, category, rto_hours, rpo_hours, sla_uptime_target FROM applications ORDER BY name"
+    ),
+    query<{ criticality: number; count: string }>(
+      "SELECT criticality, COUNT(*) AS count FROM assets GROUP BY criticality ORDER BY criticality DESC"
+    ),
   ]);
 
   const coreUptimeValue = toNumber(coreUptime?.value);
@@ -110,24 +140,59 @@ export async function getCioDashboard() {
       memoryUtilization: toNumber(memory?.value),
       storageUtilization: toNumber(storage?.value),
     },
+    applicationPortfolio: applications.map((a) => ({
+      id: a.id,
+      name: a.name,
+      category: a.category,
+      rtoHours: a.rto_hours,
+      rpoHours: a.rpo_hours,
+      slaUptimeTarget: toNumber(a.sla_uptime_target),
+    })),
+    assetsByCriticality: assetsByCriticality.map((row) => ({
+      criticality: row.criticality,
+      count: toNumber(row.count),
+    })),
   };
 }
 
 export async function getCroDashboard() {
-  const [topRisks, lossEvents, controls, openIssues, upcomingDeadlines, businessUnitRisk] = await Promise.all([
+  const [
+    topRisks,
+    lossEvents,
+    controlEffectivenessByFramework,
+    openIssues,
+    upcomingDeadlines,
+    businessUnitRisk,
+    risksByCategory,
+    incidentsWithImpact,
+  ] = await Promise.all([
     query("SELECT * FROM risks ORDER BY residual_score DESC NULLS LAST LIMIT 5"),
     query<{ type: string; amount: string; date: string | Date }>(
       "SELECT type, amount, date FROM loss_events ORDER BY date"
     ),
-    query<{ framework: string; effectiveness_score: string }>(
-      "SELECT framework, effectiveness_score FROM controls"
-    ),
+    getControlEffectivenessByFramework(),
     getMetricByName("Open Regulatory Issues"),
     getMetricByName("Upcoming Regulatory Deadlines"),
     query<{ business_unit: string; risk_score: string }>(
       `SELECT o.name AS business_unit, AVG(r.residual_score) AS risk_score
        FROM risks r JOIN organizations o ON o.id = r.business_unit_id
        GROUP BY o.name ORDER BY risk_score DESC NULLS LAST`
+    ),
+    query<{ category: string; count: string }>("SELECT category, COUNT(*) AS count FROM risks GROUP BY category ORDER BY category"),
+    query<{
+      id: string;
+      type: string;
+      severity: string;
+      start_time: string;
+      impact_description: string | null;
+      impact_financial: string | null;
+      impact_regulatory: boolean;
+    }>(
+      `SELECT id, type, severity, start_time, impact_description, impact_financial, impact_regulatory
+       FROM incidents
+       WHERE impact_financial IS NOT NULL OR impact_regulatory = TRUE
+       ORDER BY start_time DESC
+       LIMIT 10`
     ),
   ]);
 
@@ -136,34 +201,15 @@ export async function getCroDashboard() {
     acc[e.type] = (acc[e.type] ?? 0) + toNumber(e.amount);
     return acc;
   }, {});
-  const trendByMonth = lossEvents.reduce<Record<string, number>>((acc, e) => {
-    const period = toPeriod(e.date);
-    acc[period] = (acc[period] ?? 0) + toNumber(e.amount);
-    return acc;
-  }, {});
-
-  const frameworkTotals = controls.reduce<Record<string, { sum: number; count: number }>>((acc, c) => {
-    const bucket = acc[c.framework] ?? { sum: 0, count: 0 };
-    bucket.sum += toNumber(c.effectiveness_score);
-    bucket.count += 1;
-    acc[c.framework] = bucket;
-    return acc;
-  }, {});
-  const averageByFramework = Object.fromEntries(
-    Object.entries(frameworkTotals).map(([framework, { sum, count }]) => [
-      framework,
-      Math.round((sum / count) * 10) / 10,
-    ])
-  );
 
   return {
     topRisks,
     lossEventsSummary: {
       totalAmount,
       byType,
-      trend: Object.entries(trendByMonth).map(([period, value]) => ({ period, value })),
+      trend: sumAmountByMonth(lossEvents),
     },
-    controlEffectiveness: { averageByFramework },
+    controlEffectiveness: { averageByFramework: controlEffectivenessByFramework },
     regulatoryPosture: {
       openIssuesCount: toNumber(openIssues?.value),
       upcomingDeadlinesCount: toNumber(upcomingDeadlines?.value),
@@ -171,6 +217,11 @@ export async function getCroDashboard() {
     businessUnitRiskProfile: businessUnitRisk.map((row) => ({
       businessUnit: row.business_unit,
       riskScore: Math.round(toNumber(row.risk_score) * 10) / 10,
+    })),
+    risksByCategory: risksByCategory.map((row) => ({ category: row.category, count: toNumber(row.count) })),
+    incidentsWithImpact: incidentsWithImpact.map((inc) => ({
+      ...inc,
+      impact_financial: inc.impact_financial === null ? null : toNumber(inc.impact_financial),
     })),
   };
 }
@@ -198,6 +249,7 @@ export async function getBoardDashboard() {
     },
     topEnterpriseRisks: topRisks,
     lossEventsLast12Months,
+    lossEventsTrend: sumAmountByMonth(lossEvents),
     regulatoryComplianceStatus: {
       openIssuesCount: toNumber(openIssues?.value),
       upcomingDeadlinesCount: toNumber(upcomingDeadlines?.value),

@@ -12,12 +12,23 @@ const SEVERITY_COLORS: Record<string, string> = {
   Low: "#16a34a",
 };
 
+interface Risk {
+  id: string;
+  category: string;
+  title: string;
+  residual_score: number;
+  status: string;
+  owner: string;
+}
+
 interface CisoData {
   securityPostureScore: number;
   securityPostureTrend: { period: string; value: number }[];
   vulnerabilitiesByCriticality: { severity: string; count: number }[];
   securityIncidentsSummary: { total: number; bySeverity: Record<string, number>; mttd: number; mttr: number };
   thirdPartyCyberRiskSummary: { id: string; title: string; residual_score: number; owner: string }[];
+  topCyberRisks: Risk[];
+  controlEffectiveness: { averageByFramework: Record<string, number> };
   regulatoryMetrics: { id: string; name: string; value: number; unit: string }[];
 }
 
@@ -57,6 +68,33 @@ export function CisoDashboard() {
           <BarChart
             data={data.vulnerabilitiesByCriticality.map((v) => ({ label: v.severity, value: v.count }))}
             colorByLabel={SEVERITY_COLORS}
+          />
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <h3>Top Cyber Risks</h3>
+          <Table
+            columns={[
+              { header: "Risk", accessor: (r) => r.title },
+              { header: "Residual Score", accessor: (r) => r.residual_score },
+              { header: "Status", accessor: (r) => r.status },
+              { header: "Owner", accessor: (r) => r.owner },
+            ]}
+            rows={data.topCyberRisks}
+            keyFn={(r) => r.id}
+            emptyLabel="No cyber risks recorded"
+          />
+        </div>
+        <div className="card">
+          <h3>Control Effectiveness by Framework</h3>
+          <BarChart
+            data={Object.entries(data.controlEffectiveness.averageByFramework).map(([label, value]) => ({
+              label,
+              value,
+            }))}
+            color="#2563eb"
           />
         </div>
       </div>

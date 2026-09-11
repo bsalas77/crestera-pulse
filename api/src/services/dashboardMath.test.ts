@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { synthesizeTrend, toNumber, toPeriod } from "./dashboardMath";
+import { sumAmountByMonth, synthesizeTrend, toNumber, toPeriod } from "./dashboardMath";
 
 describe("toNumber", () => {
   it("returns 0 for null/undefined", () => {
@@ -44,5 +44,28 @@ describe("synthesizeTrend", () => {
     const trend = synthesizeTrend(50, 4);
     const periods = trend.map((p) => p.period);
     expect(periods).toEqual([...periods].sort());
+  });
+});
+
+describe("sumAmountByMonth", () => {
+  it("sums amounts within the same month", () => {
+    const result = sumAmountByMonth([
+      { date: "2026-08-01", amount: "100" },
+      { date: "2026-08-19", amount: 50 },
+    ]);
+    expect(result).toEqual([{ period: "2026-08", value: 150 }]);
+  });
+
+  it("sorts buckets chronologically regardless of input order", () => {
+    const result = sumAmountByMonth([
+      { date: "2026-09-01", amount: 1 },
+      { date: "2026-07-01", amount: 1 },
+      { date: "2026-08-01", amount: 1 },
+    ]);
+    expect(result.map((r) => r.period)).toEqual(["2026-07", "2026-08", "2026-09"]);
+  });
+
+  it("returns an empty array for no rows", () => {
+    expect(sumAmountByMonth([])).toEqual([]);
   });
 });

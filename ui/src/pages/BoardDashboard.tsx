@@ -16,6 +16,7 @@ interface BoardData {
   coreBankingUptime: { current: number; trend: { period: string; value: number }[] };
   topEnterpriseRisks: Risk[];
   lossEventsLast12Months: number;
+  lossEventsTrend: { period: string; value: number }[];
   regulatoryComplianceStatus: { openIssuesCount: number; upcomingDeadlinesCount: number };
 }
 
@@ -52,9 +53,15 @@ export function BoardDashboard() {
         <TimeSeriesChart data={data.coreBankingUptime.trend} unit="%" />
       </div>
 
-      <div className="card">
-        <h3>Top Enterprise Risks</h3>
-        <Heatmap risks={data.topEnterpriseRisks} />
+      <div className="grid-2">
+        <div className="card">
+          <h3>Top Enterprise Risks</h3>
+          <Heatmap risks={data.topEnterpriseRisks} />
+        </div>
+        <div className="card">
+          <h3>Loss Events Trend</h3>
+          <TimeSeriesChart data={data.lossEventsTrend} color="#b91c1c" unit=" USD" />
+        </div>
       </div>
     </div>
   );

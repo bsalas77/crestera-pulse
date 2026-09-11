@@ -15,12 +15,24 @@ interface Risk {
   owner: string;
 }
 
+interface IncidentWithImpact {
+  id: string;
+  type: string;
+  severity: string;
+  start_time: string;
+  impact_description: string | null;
+  impact_financial: number | null;
+  impact_regulatory: boolean;
+}
+
 interface CroData {
   topRisks: Risk[];
   lossEventsSummary: { totalAmount: number; byType: Record<string, number>; trend: { period: string; value: number }[] };
   controlEffectiveness: { averageByFramework: Record<string, number> };
   regulatoryPosture: { openIssuesCount: number; upcomingDeadlinesCount: number };
   businessUnitRiskProfile: { businessUnit: string; riskScore: number }[];
+  risksByCategory: { category: string; count: number }[];
+  incidentsWithImpact: IncidentWithImpact[];
 }
 
 export function CroDashboard() {
@@ -67,15 +79,40 @@ export function CroDashboard() {
         </div>
       </div>
 
+      <div className="grid-2">
+        <div className="card">
+          <h3>Risks by Category</h3>
+          <BarChart
+            data={data.risksByCategory.map((r) => ({ label: r.category, value: r.count }))}
+            color="#7c3aed"
+          />
+        </div>
+        <div className="card">
+          <h3>Business Unit Risk Profile</h3>
+          <Table
+            columns={[
+              { header: "Business Unit", accessor: (r) => r.businessUnit },
+              { header: "Avg. Residual Risk Score", accessor: (r) => r.riskScore },
+            ]}
+            rows={data.businessUnitRiskProfile}
+            keyFn={(r) => r.businessUnit}
+          />
+        </div>
+      </div>
+
       <div className="card">
-        <h3>Business Unit Risk Profile</h3>
+        <h3>Incidents with Financial or Regulatory Impact</h3>
         <Table
           columns={[
-            { header: "Business Unit", accessor: (r) => r.businessUnit },
-            { header: "Avg. Residual Risk Score", accessor: (r) => r.riskScore },
+            { header: "Type", accessor: (i) => i.type },
+            { header: "Severity", accessor: (i) => i.severity },
+            { header: "Date", accessor: (i) => new Date(i.start_time).toLocaleDateString() },
+            { header: "Financial Impact", accessor: (i) => (i.impact_financial != null ? `$${i.impact_financial.toLocaleString()}` : "—") },
+            { header: "Regulatory", accessor: (i) => (i.impact_regulatory ? "Yes" : "No") },
           ]}
-          rows={data.businessUnitRiskProfile}
-          keyFn={(r) => r.businessUnit}
+          rows={data.incidentsWithImpact}
+          keyFn={(i) => i.id}
+          emptyLabel="No incidents with financial or regulatory impact"
         />
       </div>
     </div>

@@ -16,6 +16,8 @@ vi.mock("./services/api", () => ({
     vulnerabilitiesByCriticality: [],
     securityIncidentsSummary: { total: 0, bySeverity: {}, mttd: 0, mttr: 0 },
     thirdPartyCyberRiskSummary: [],
+    topCyberRisks: [risk],
+    controlEffectiveness: { averageByFramework: {} },
     regulatoryMetrics: [],
   }),
   getCioDashboard: async () => ({
@@ -24,6 +26,8 @@ vi.mock("./services/api", () => ({
     changeRisk: { changeFailureRate: 5, incidentsLinkedToChanges: 1 },
     techDebtSummary: { legacyAssetCount: 1, endOfSupportAssetCount: 1 },
     capacityMetrics: { cpuUtilization: 50, memoryUtilization: 50, storageUtilization: 50 },
+    applicationPortfolio: [],
+    assetsByCriticality: [],
   }),
   getCroDashboard: async () => ({
     topRisks: [risk],
@@ -31,12 +35,15 @@ vi.mock("./services/api", () => ({
     controlEffectiveness: { averageByFramework: {} },
     regulatoryPosture: { openIssuesCount: 0, upcomingDeadlinesCount: 0 },
     businessUnitRiskProfile: [],
+    risksByCategory: [],
+    incidentsWithImpact: [],
   }),
   getBoardDashboard: async () => ({
     overallSecurityPostureScore: 78,
     coreBankingUptime: { current: 99.9, trend },
     topEnterpriseRisks: [risk],
     lossEventsLast12Months: 0,
+    lossEventsTrend: [],
     regulatoryComplianceStatus: { openIssuesCount: 0, upcomingDeadlinesCount: 0 },
   }),
 }));
