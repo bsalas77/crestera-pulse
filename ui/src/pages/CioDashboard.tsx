@@ -1,0 +1,75 @@
+import { useEffect, useState } from "react";
+import { BarChart } from "../components/BarChart";
+import { MetricCard } from "../components/MetricCard";
+import { TimeSeriesChart } from "../components/TimeSeriesChart";
+import { getCioDashboard } from "../services/api";
+
+interface CioData {
+  coreBankingUptime: { current: number; trend: { period: string; value: number }[] };
+  channelPerformance: { online: number; mobile: number; atm: number; callCenter: number };
+  changeRisk: { changeFailureRate: number; incidentsLinkedToChanges: number };
+  techDebtSummary: { legacyAssetCount: number; endOfSupportAssetCount: number };
+  capacityMetrics: { cpuUtilization: number; memoryUtilization: number; storageUtilization: number };
+}
+
+export function CioDashboard() {
+  const [data, setData] = useState<CioData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCioDashboard().then((d) => {
+      setData(d);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading || !data) return <div className="loading">Loading CIO dashboard...</div>;
+
+  return (
+    <div className="dashboard">
+      <h2>CIO — Technology Performance & Resilience</h2>
+
+      <div className="grid-3">
+        <MetricCard title="Core Banking Uptime" value={`${data.coreBankingUptime.current}%`} tone="good" />
+        <MetricCard title="Change Failure Rate" value={`${data.changeRisk.changeFailureRate}%`} tone="warn" />
+        <MetricCard title="Incidents Linked to Changes" value={data.changeRisk.incidentsLinkedToChanges} />
+      </div>
+
+      <div className="card">
+        <h3>Core Banking Uptime Trend</h3>
+        <TimeSeriesChart data={data.coreBankingUptime.trend} unit="%" />
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <h3>Channel Performance</h3>
+          <div className="grid-4">
+            <MetricCard title="Online Banking" value={`${data.channelPerformance.online}%`} />
+            <MetricCard title="Mobile Banking" value={`${data.channelPerformance.mobile}%`} />
+            <MetricCard title="ATM Network" value={`${data.channelPerformance.atm}%`} />
+            <MetricCard title="Call Center SLA" value={`${data.channelPerformance.callCenter}%`} />
+          </div>
+        </div>
+        <div className="card">
+          <h3>Capacity Utilization</h3>
+          <BarChart
+            data={[
+              { label: "CPU", value: data.capacityMetrics.cpuUtilization },
+              { label: "Memory", value: data.capacityMetrics.memoryUtilization },
+              { label: "Storage", value: data.capacityMetrics.storageUtilization },
+            ]}
+            color="#2563eb"
+          />
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>Tech Debt Summary</h3>
+        <div className="grid-2">
+          <MetricCard title="Legacy Assets" value={data.techDebtSummary.legacyAssetCount} tone="warn" />
+          <MetricCard title="End-of-Support Risks" value={data.techDebtSummary.endOfSupportAssetCount} tone="warn" />
+        </div>
+      </div>
+    </div>
+  );
+}
