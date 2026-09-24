@@ -5,10 +5,13 @@ on:
     branches: [main]
   pull_request:
 
-# The RUNNER repo variable selects a self-hosted runner. It is never used for
-# pull requests once the repo is public (a fork's PR would run its code on that
-# machine); PRs then fall back to GitHub-hosted runners. While the repo is
-# private, only collaborators can open PRs, so they may use the runner too.
+# The RUNNER repo variable selects a self-hosted runner. That is only safe while
+# this repository is PRIVATE (only collaborators can open pull requests).
+#
+# Before making the repository public, delete the RUNNER variable AND remove the
+# runner registered to this repo. Do not rely on the expressions below to protect
+# it: a pull request can edit this very file (e.g. `runs-on: self-hosted`), and a
+# runner with the Docker socket mounted gives that code root on the Docker host.
 jobs:
   api:
     runs-on: ${{ ((github.event_name != 'pull_request' || github.event.repository.private) && vars.RUNNER) || 'ubuntu-latest' }}
