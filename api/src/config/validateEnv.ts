@@ -33,8 +33,10 @@ export function validateEnv(env: Record<string, string | undefined>, prod: boole
   }
 
   const dbPass = env.DB_PASS;
-  if (isSet(dbPass) && dbPass === "dashboard_pass") {
-    fail("DB_PASS is still the default value — set a real password.");
+  if (!isSet(dbPass)) {
+    fail("DB_PASS is required — the built-in fallback password is public.");
+  } else if (dbPass === "dashboard_pass" || PLACEHOLDER.test(dbPass)) {
+    fail("DB_PASS is still the example/default value — set a real password.");
   }
 
   const corsOrigin = env.CORS_ORIGIN;

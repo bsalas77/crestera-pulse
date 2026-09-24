@@ -6,6 +6,7 @@
  *
  * Usage: npm run import-data -- /path/to/csv-folder
  */
+import "./loadEnv";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parse } from "csv-parse/sync";

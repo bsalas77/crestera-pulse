@@ -6,6 +6,7 @@
  *
  * Usage: npm run manage-users -- create <username> <password> <CISO|CIO|CRO|BOARD>
  */
+import "./loadEnv";
 import bcrypt from "bcryptjs";
 import { pool } from "../src/db/pool";
 

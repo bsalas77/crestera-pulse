@@ -5,9 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+# Public repo: only pushes (maintainers) may use the self-hosted runner set via
+# the RUNNER repo variable; pull requests, including forks, always run on
+# GitHub-hosted runners.
 jobs:
   api:
-    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name != 'pull_request' && vars.RUNNER) || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: api
@@ -17,20 +20,20 @@ jobs:
         env:
           POSTGRES_USER: dashboard
           POSTGRES_PASSWORD: ci-only-not-a-real-secret
-          POSTGRES_DB: dashboard
+          POSTGRES_DB: dashboard_test
         ports:
           - 55433:5432
         options: >-
-          --health-cmd "pg_isready -U dashboard -d dashboard"
+          --health-cmd "pg_isready -U dashboard -d dashboard_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DB_HOST: ${{ vars.RUNNER && 'host.docker.internal' || 'localhost' }}
+      DB_HOST: ${{ (github.event_name != 'pull_request' && vars.RUNNER) && 'host.docker.internal' || 'localhost' }}
       DB_PORT: 55433
       DB_USER: dashboard
       DB_PASS: ci-only-not-a-real-secret
-      DB_NAME: dashboard
+      DB_NAME: dashboard_test
       JWT_SECRET: ci-only-jwt-secret-at-least-32-characters-long
 
     steps:
@@ -60,7 +63,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
   ui:
-    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name != 'pull_request' && vars.RUNNER) || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: ui

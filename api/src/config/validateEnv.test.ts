@@ -33,6 +33,16 @@ describe("validateEnv", () => {
     expect(report.errors.some((e) => e.includes("DB_PASS"))).toBe(true);
   });
 
+  it("errors in production when DB_PASS is missing", () => {
+    const report = validateEnv({ ...goodEnv, DB_PASS: undefined }, true);
+    expect(report.errors.some((e) => e.includes("DB_PASS is required"))).toBe(true);
+  });
+
+  it("errors in production when DB_PASS is the .env.example placeholder", () => {
+    const report = validateEnv({ ...goodEnv, DB_PASS: "change-me-to-a-real-password" }, true);
+    expect(report.errors.some((e) => e.includes("DB_PASS"))).toBe(true);
+  });
+
   it("errors in production when CORS_ORIGIN is a wildcard", () => {
     const report = validateEnv({ ...goodEnv, CORS_ORIGIN: "*" }, true);
     expect(report.errors.some((e) => e.includes("CORS_ORIGIN"))).toBe(true);

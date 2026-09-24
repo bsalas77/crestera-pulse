@@ -8,16 +8,24 @@ import { authRoutes } from "./routes/authRoutes";
 import { dashboardRoutes } from "./routes/dashboardRoutes";
 import { entityRoutes } from "./routes/entityRoutes";
 
-const loginRateLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many login attempts — try again in a minute." },
-});
+interface AppOptions {
+  /** Reverse proxies in front of the API (0 = none). Decides whose IP the login limiter counts. */
+  trustProxyHops?: number;
+}
 
-export function createApp() {
+export function createApp(options: AppOptions = {}) {
   const app = express();
+
+  const hops = options.trustProxyHops ?? env.trustProxyHops;
+  if (hops > 0) app.set("trust proxy", hops);
+
+  const loginRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many login attempts — try again in a minute." },
+  });
 
   app.use(helmet());
   app.use(cors({ origin: env.corsOrigin }));

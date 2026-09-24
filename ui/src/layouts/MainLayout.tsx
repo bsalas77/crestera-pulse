@@ -53,18 +53,25 @@ export function MainLayout() {
   );
 }
 
-// TODO: point this at the real Crestera marketing/contact page once one exists.
-const CRESTERA_URL = "#";
-
 function UpgradeCallout() {
-  return (
-    <a className="upgrade-callout" href={CRESTERA_URL} target="_blank" rel="noreferrer">
+  // Build-time setting (CRESTERA_URL in .env). Without a URL this is plain text, never a dead link.
+  const url = import.meta.env.VITE_CRESTERA_URL;
+  const body = (
+    <>
       <div className="upgrade-callout-title">Powered by Crestera</div>
       <p>
         This is a free, read-only preview. Crestera adds automated evidence collection, audit trails, and FFIEC/NCUA
         framework crosswalks.
       </p>
-      <span className="upgrade-callout-cta">See what Crestera adds →</span>
+      {url && <span className="upgrade-callout-cta">See what Crestera adds →</span>}
+    </>
+  );
+
+  return url ? (
+    <a className="upgrade-callout" href={url} target="_blank" rel="noreferrer">
+      {body}
     </a>
+  ) : (
+    <div className="upgrade-callout">{body}</div>
   );
 }

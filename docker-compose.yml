@@ -12,7 +12,7 @@ services:
       - ./db/init/02-seed.sh:/docker-entrypoint-initdb.d/02-seed.sh
       - ./db/seed.sql:/seed-source/seed.sql
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dashboard} -d ${DB_NAME:-dashboard}"]
       interval: 5s
@@ -28,8 +28,9 @@ services:
       DB_PASS: ${DB_PASS:?Set DB_PASS in your .env file (copy .env.example)}
       DB_NAME: ${DB_NAME:-dashboard}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file (copy .env.example and generate a real secret)}
-      CORS_ORIGIN: http://localhost:3000
-      NODE_ENV: ${NODE_ENV:-development}
+      CORS_ORIGIN: ${PUBLIC_UI_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-production}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
     depends_on:
       db:
         condition: service_healthy
@@ -46,7 +47,8 @@ services:
     build:
       context: ./ui
       args:
-        VITE_API_URL: http://localhost:8000
+        VITE_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
+        VITE_CRESTERA_URL: ${CRESTERA_URL:-}
     depends_on:
       api:
         condition: service_healthy
