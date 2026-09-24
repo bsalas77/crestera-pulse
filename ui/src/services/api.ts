@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// Same origin by default: nginx (Docker) or the Vite dev server forwards /api to the API.
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const api = axios.create({ baseURL: API_URL });
 
@@ -49,6 +50,9 @@ export async function login(username: string, password: string): Promise<LoginRe
   const { data } = await api.post<LoginResponse>("/auth/login", { username, password });
   return data;
 }
+
+/** Whether the published demo accounts are active (decides if the login page shows their password). */
+export const getDemoMode = () => api.get<{ demo: boolean }>("/auth/demo").then((r) => r.data.demo === true);
 
 export const getCisoDashboard = () => api.get("/dashboard/ciso").then((r) => r.data);
 export const getCioDashboard = () => api.get("/dashboard/cio").then((r) => r.data);

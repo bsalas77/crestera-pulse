@@ -1,6 +1,9 @@
 import { createApp } from "./app";
 import { checkEnv } from "./config/validateEnv";
 import { env } from "./config/env";
+import { pool } from "./db/pool";
+import { describeDbError } from "./db/dbErrors";
+import { migrate } from "./db/migrate";
 
 const report = checkEnv();
 for (const warning of report.warnings) {
@@ -14,8 +17,35 @@ if (report.errors.length > 0) {
   process.exit(1);
 }
 
-const app = createApp();
+// Check the database before accepting traffic, so a wrong DB_PASS shows up as
+// a clear startup error instead of a healthy-looking API that fails every login.
+async function waitForDatabase(): Promise<void> {
+  const target = { host: env.db.host, port: env.db.port, user: env.db.user, database: env.db.database };
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await pool.query("SELECT 1 FROM users LIMIT 1");
+      return;
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      const transient = code === "ECONNREFUSED" || code === "57P03" || code === "EAI_AGAIN";
+      if (transient && attempt < 30) {
+        await new Promise((r) => setTimeout(r, 1000));
+        continue;
+      }
+      console.error(`[db] ${describeDbError(err, target) ?? (err as Error).message}`);
+      process.exit(1);
+    }
+  }
+}
 
-app.listen(env.port, () => {
-  console.log(`Dashboard API listening on port ${env.port}`);
-});
+waitForDatabase()
+  .then(() => migrate(pool))
+  .then(() => {
+    createApp().listen(env.port, () => {
+      console.log(`Dashboard API listening on port ${env.port}`);
+    });
+  })
+  .catch((err) => {
+    console.error(`[db] Updating the database schema failed: ${(err as Error).message}`);
+    process.exit(1);
+  });

@@ -44,7 +44,7 @@ export function BoardDashboard() {
 
       <div className="card">
         <h3>Core Banking Uptime Trend</h3>
-        <TimeSeriesChart data={data.coreBankingUptime.trend} unit="%" />
+        <TimeSeriesChart data={data.coreBankingUptime.trend} unit="%" zoom />
       </div>
 
       <div className="grid-2">
@@ -54,7 +54,7 @@ export function BoardDashboard() {
         </div>
         <div className="card">
           <h3>Loss Events Trend</h3>
-          <TimeSeriesChart data={data.lossEventsTrend} color="#b91c1c" unit=" USD" />
+          <TimeSeriesChart data={data.lossEventsTrend} color="#b91c1c" unit=" USD" emptyLabel="No loss events in the last 12 months" />
         </div>
       </div>
     </div>

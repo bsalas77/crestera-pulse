@@ -3,7 +3,9 @@
     "target": "ES2022",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,5 +15,7 @@
     "sourceMap": false,
     "noEmit": true
   },
-  "include": ["src", "scripts"]
+  "include": [
+    "src"
+  ]
 }

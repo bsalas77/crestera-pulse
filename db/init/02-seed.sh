@@ -9,5 +9,5 @@ if [ "${SEED_DEMO:-true}" = "true" ]; then
   echo "SEED_DEMO=true — loading demo data (db/seed.sql)."
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f /seed-source/seed.sql
 else
-  echo "SEED_DEMO=false — skipping demo data. Schema created empty; load your own data with 'npm run import-data' (see README)."
+  echo "SEED_DEMO=false — skipping demo data. Schema created empty; load your own data with the importer (README: Bring your own data)."
 fi

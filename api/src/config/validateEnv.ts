@@ -39,9 +39,14 @@ export function validateEnv(env: Record<string, string | undefined>, prod: boole
     fail("DB_PASS is still the example/default value — set a real password.");
   }
 
-  const corsOrigin = env.CORS_ORIGIN;
-  if (prod && corsOrigin === "*") {
-    errors.push("CORS_ORIGIN is \"*\" in production — set it to the real UI origin.");
+  const origins = (env.CORS_ORIGIN ?? "").split(",").map((o) => o.trim());
+  if (prod && origins.includes("*")) {
+    errors.push("CORS_ORIGIN is \"*\" in production — list the exact web addresses allowed to call the API.");
+  }
+  for (const origin of origins.filter((o) => o && o !== "*")) {
+    if (!/^https?:\/\/[^/\s]+$/.test(origin.replace(/\/+$/, ""))) {
+      fail(`CORS_ORIGIN entry "${origin}" isn't a web address like https://pulse.example.com (no path).`);
+    }
   }
 
   return { errors, warnings };

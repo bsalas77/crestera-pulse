@@ -1,20 +1,30 @@
 import type { NextFunction, Request, Response } from "express";
 import { verifyToken } from "./jwt";
-import type { Role } from "../types";
+import { sessionStillValid } from "../services/authService";
+import type { AuthUser, Role } from "../types";
 
-export function authenticate(req: Request, res: Response, next: NextFunction) {
+export async function authenticate(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing bearer token" });
   }
 
-  const token = header.slice("Bearer ".length);
+  let user: AuthUser;
   try {
-    req.user = verifyToken(token);
-    next();
+    user = verifyToken(header.slice("Bearer ".length));
   } catch {
-    res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
+
+  try {
+    if (!(await sessionStillValid(user))) {
+      return res.status(401).json({ error: "This account was changed or removed — sign in again" });
+    }
+  } catch (err) {
+    return next(err);
+  }
+  req.user = user;
+  next();
 }
 
 export function requireRole(...allowed: Role[]) {

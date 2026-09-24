@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { login } from "../services/authService";
+import { isDemoActive, login } from "../services/authService";
 
 export async function loginHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -14,6 +14,14 @@ export async function loginHandler(req: Request, res: Response, next: NextFuncti
     }
 
     res.json({ token });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function demoModeHandler(_req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json({ demo: await isDemoActive() });
   } catch (err) {
     next(err);
   }

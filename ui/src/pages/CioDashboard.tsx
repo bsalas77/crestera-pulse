@@ -43,7 +43,7 @@ export function CioDashboard() {
 
       <div className="card">
         <h3>Core Banking Uptime Trend</h3>
-        <TimeSeriesChart data={data.coreBankingUptime.trend} unit="%" />
+        <TimeSeriesChart data={data.coreBankingUptime.trend} unit="%" zoom />
       </div>
 
       <div className="grid-2">

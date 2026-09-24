@@ -118,12 +118,14 @@ CREATE TABLE metric_dimensions (
 );
 
 -- Application logins. `password` holds a bcrypt hash, never plain text;
--- create real users with `npm run manage-users` (see README).
+-- manage them with the manage-users tool (see README). Sessions issued before
+-- password_changed_at stop working, so a password change signs the user out.
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('CISO', 'CIO', 'CRO', 'BOARD'))
+  role TEXT NOT NULL CHECK (role IN ('CISO', 'CIO', 'CRO', 'BOARD')),
+  password_changed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_assets_business_unit ON assets(business_unit_id);

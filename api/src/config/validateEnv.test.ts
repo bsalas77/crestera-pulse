@@ -48,6 +48,18 @@ describe("validateEnv", () => {
     expect(report.errors.some((e) => e.includes("CORS_ORIGIN"))).toBe(true);
   });
 
+  it("errors in production when a CORS_ORIGIN entry has a path or no scheme", () => {
+    for (const bad of ["pulse.example.com", "https://pulse.example.com/login"]) {
+      const report = validateEnv({ ...goodEnv, CORS_ORIGIN: bad }, true);
+      expect(report.errors.some((e) => e.includes(`CORS_ORIGIN entry "${bad}"`))).toBe(true);
+    }
+  });
+
+  it("accepts a list of valid origins, with or without a trailing slash", () => {
+    const report = validateEnv({ ...goodEnv, CORS_ORIGIN: "http://localhost:3000,http://127.0.0.1:3000/" }, true);
+    expect(report.errors).toEqual([]);
+  });
+
   it("downgrades the same issues to warnings outside production", () => {
     const report = validateEnv({ JWT_SECRET: "some-dev-secret" }, false);
     expect(report.errors).toEqual([]);

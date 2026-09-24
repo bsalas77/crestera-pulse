@@ -15,7 +15,7 @@ complexity, but confirmed vulnerabilities will be prioritised.
 
 **Scope:** the code in this repository and its Docker images. The
 deployment around it (your TLS proxy, host, network and backups) is yours to
-secure — see the Security and "Deploying on a server" sections of the README
+secure — see the Security and "Serving it to other people" sections of the README
 for what the tool does and doesn't do for you.
 
 **Supported versions:** the latest commit on `main`.

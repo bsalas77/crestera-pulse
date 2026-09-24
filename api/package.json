@@ -9,10 +9,10 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src scripts",
+    "lint": "eslint src",
     "test": "vitest run",
-    "import-data": "tsx scripts/import-csv.ts",
-    "manage-users": "tsx scripts/manage-users.ts"
+    "import-data": "tsx src/cli/import-csv.ts",
+    "manage-users": "tsx src/cli/manage-users.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -39,5 +39,8 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
     "vitest": "^2.0.5"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

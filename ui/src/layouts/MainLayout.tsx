@@ -20,8 +20,8 @@ export function MainLayout() {
         </div>
       </header>
       <div className="app-body">
-        <nav className="app-nav">
-          <div className="app-nav-links">
+        <div className="app-side">
+          <nav className="app-nav">
             {(role === "CISO" || role === "BOARD") && (
               <NavLink to="/ciso-dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
                 CISO Dashboard
@@ -42,9 +42,9 @@ export function MainLayout() {
                 Board Dashboard
               </NavLink>
             )}
-          </div>
+          </nav>
           <UpgradeCallout />
-        </nav>
+        </div>
         <main className="app-content">
           <Outlet />
         </main>

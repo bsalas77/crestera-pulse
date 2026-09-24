@@ -68,8 +68,9 @@ body {
   flex: 1;
 }
 
-.app-nav {
+.app-side {
   width: 220px;
+  flex-shrink: 0;
   background: white;
   border-right: 1px solid #e2e8f0;
   display: flex;
@@ -78,7 +79,7 @@ body {
   padding: 1rem 0;
 }
 
-.app-nav-links {
+.app-nav {
   display: flex;
   flex-direction: column;
 }
@@ -133,8 +134,68 @@ body {
 
 .app-content {
   flex: 1;
+  min-width: 0;
   padding: 1.5rem;
   overflow-x: auto;
+}
+
+/* Phones and narrow windows: dashboards get the full width, the dashboard
+   links become a scrollable tab strip, and the Crestera note moves below. */
+@media (max-width: 760px) {
+  .app-header {
+    padding: 0.6rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .app-user {
+    gap: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .app-body {
+    flex-direction: column;
+  }
+
+  .app-side {
+    display: contents;
+  }
+
+  .app-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .app-nav a {
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
+    font-size: 0.9rem;
+  }
+
+  .app-nav a.active {
+    border-right: none;
+    border-bottom: 3px solid #2563eb;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
+
+  .upgrade-callout {
+    order: 1;
+    margin: 0 1rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title-tag {
+    display: none;
+  }
+
+  .login-card {
+    padding: 1.75rem;
+  }
 }
 
 .dashboard h2 {
@@ -174,11 +235,19 @@ body {
   gap: 1rem;
 }
 
+/* Let a wide table scroll inside its card instead of stretching the column. */
+.grid-2 > *,
+.grid-3 > *,
+.grid-4 > * {
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .grid-2,
   .grid-3,
   .grid-4 {
     grid-template-columns: 1fr;
+    row-gap: 0; /* stacked cards already carry their own bottom margin */
   }
 }
 
@@ -285,7 +354,7 @@ body {
   background: white;
   padding: 2.5rem;
   border-radius: 10px;
-  width: 340px;
+  width: min(340px, calc(100vw - 2rem));
   display: flex;
   flex-direction: column;
   gap: 1rem;
