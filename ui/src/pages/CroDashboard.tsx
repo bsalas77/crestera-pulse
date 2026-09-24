@@ -65,7 +65,7 @@ export function CroDashboard() {
       <div className="grid-2">
         <div className="card">
           <h3>Loss Events Trend</h3>
-          <TimeSeriesChart data={data.lossEventsSummary.trend} color="#b91c1c" unit=" USD" />
+          <TimeSeriesChart data={data.lossEventsSummary.trend} color="#b91c1c" unit=" USD" emptyLabel="No loss events recorded" />
         </div>
         <div className="card">
           <h3>Control Effectiveness by Framework</h3>

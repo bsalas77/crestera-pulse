@@ -1,0 +1,9 @@
+# Local development only: publishes the database on this machine so `npm run dev`,
+# `npm test` and the npm import/user scripts can reach it. Use it together with
+# the main file:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"

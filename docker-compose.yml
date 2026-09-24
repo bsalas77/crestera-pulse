@@ -1,15 +1,21 @@
+# Crestera Pulse. All settings come from .env (see README "Quick start").
+# A fixed project name keeps your data volume the same whatever this folder is
+# called (for example after unpacking a newer download next to the old one).
+name: crestera-pulse
+
 services:
   db:
     build: ./db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-dashboard}
-      POSTGRES_PASSWORD: ${DB_PASS:?Set DB_PASS in your .env file (copy .env.example)}
+      POSTGRES_PASSWORD: ${DB_PASS:?Set DB_PASS in your .env file (see README - Running it)}
       POSTGRES_DB: ${DB_NAME:-dashboard}
       SEED_DEMO: ${SEED_DEMO:-true}
     volumes:
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "127.0.0.1:5432:5432"
+    # Not published to the host: only the API talks to the database.
+    # (docker-compose.dev.yml publishes it for local development and tests.)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dashboard} -d ${DB_NAME:-dashboard}"]
       interval: 5s
@@ -18,16 +24,24 @@ services:
 
   api:
     build: ./api
+    restart: unless-stopped
     environment:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER:-dashboard}
-      DB_PASS: ${DB_PASS:?Set DB_PASS in your .env file (copy .env.example)}
+      DB_PASS: ${DB_PASS:?Set DB_PASS in your .env file (see README - Running it)}
       DB_NAME: ${DB_NAME:-dashboard}
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file (copy .env.example and generate a real secret)}
-      CORS_ORIGIN: ${PUBLIC_UI_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file (see README - Running it)}
+      CORS_ORIGIN: http://localhost:${UI_PORT:-3000},http://127.0.0.1:${UI_PORT:-3000}
       NODE_ENV: ${NODE_ENV:-production}
+      # Your own reverse proxies in front of Pulse (README "Serving it to other people").
       TRUST_PROXY: ${TRUST_PROXY:-0}
+      # The UI's nginx, which forwards /api here.
+      BUILTIN_PROXY_HOPS: 1
+    volumes:
+      # Your CSV files for the importer (README "Bring your own data"). Read-only;
+      # `z` lets SELinux hosts (RHEL, Alma, Fedora) share the folder with the container.
+      - ./import:/import:ro,z
     depends_on:
       db:
         condition: service_healthy
@@ -38,21 +52,20 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    ports:
-      - "8000:8000"
+    # Not published: browsers reach the API through the UI's /api path.
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 40s
 
   ui:
     build:
       context: ./ui
       args:
-        VITE_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
         VITE_CRESTERA_URL: ${CRESTERA_URL:-}
+    restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
@@ -64,7 +77,7 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "3000:8080"
+      - "${BIND_ADDRESS:-127.0.0.1}:${UI_PORT:-3000}:8080"
 
 volumes:
   db_data:

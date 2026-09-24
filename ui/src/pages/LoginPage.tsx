@@ -1,7 +1,9 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import type { Role } from "../hooks/useAuth";
+import { describeLoginError } from "../hooks/useDashboard";
+import { getDemoMode } from "../services/api";
 
 function defaultRouteForRole(role: Role): string {
   switch (role) {
@@ -22,8 +24,19 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [demo, setDemo] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    let cancelled = false;
+    getDemoMode()
+      .then((isDemo) => !cancelled && setDemo(isDemo))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (isAuthenticated && role) {
     const from = (location.state as { from?: string } | null)?.from;
@@ -37,8 +50,8 @@ export function LoginPage() {
     try {
       await login(username, password);
       navigate("/", { replace: true });
-    } catch {
-      setError("Invalid username or password");
+    } catch (err) {
+      setError(describeLoginError(err));
     } finally {
       setSubmitting(false);
     }
@@ -61,9 +74,11 @@ export function LoginPage() {
         <button type="submit" disabled={submitting}>
           {submitting ? "Signing in..." : "Sign in"}
         </button>
-        <div className="login-hint">
-          Every demo account's password is <strong>password</strong>. Usernames: ciso, cio, cro, board.
-        </div>
+        {demo && (
+          <div className="login-hint">
+            Every demo account's password is <strong>password</strong>. Usernames: ciso, cio, cro, board.
+          </div>
+        )}
       </form>
     </div>
   );

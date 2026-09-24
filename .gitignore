@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 *.log
+
+# Your own data for the importer stays local
+import/*
+!import/README.md

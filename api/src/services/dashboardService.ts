@@ -1,5 +1,5 @@
 import { query, queryOne } from "../db/pool";
-import { sumAmountByMonth, synthesizeTrend, toNumber } from "./dashboardMath";
+import { sumAmountByMonth, toNumber, type TrendPoint } from "./dashboardMath";
 
 interface MetricRow {
   id: string;
@@ -15,9 +15,28 @@ interface MetricRow {
 
 async function getMetricByName(name: string): Promise<MetricRow | null> {
   // Most recent period wins, so importing several months of history still shows the latest.
-  return queryOne<MetricRow>("SELECT * FROM metrics WHERE name = $1 ORDER BY period_end DESC, period_start DESC LIMIT 1", [
+  return queryOne<MetricRow>("SELECT * FROM metrics WHERE lower(name) = lower($1) ORDER BY period_end DESC, period_start DESC LIMIT 1", [
     name,
   ]);
+}
+
+/**
+ * The last 12 months of a metric as imported, oldest first — one point per
+ * month of period_start (if a month was imported twice, its latest period_end
+ * wins). Nothing is invented: one imported month gives a one-point trend.
+ */
+async function getMetricHistory(name: string): Promise<TrendPoint[]> {
+  const rows = await query<{ period: string; value: string }>(
+    `SELECT period, value FROM (
+       SELECT DISTINCT ON (date_trunc('month', period_start))
+              to_char(period_start, 'YYYY-MM') AS period, value, period_start
+       FROM metrics WHERE lower(name) = lower($1)
+       ORDER BY date_trunc('month', period_start) DESC, period_end DESC
+       LIMIT 12
+     ) latest ORDER BY period_start`,
+    [name]
+  );
+  return rows.map((r) => ({ period: r.period, value: toNumber(r.value) }));
 }
 
 /** Average control effectiveness_score per framework — shared by the CISO and CRO views. */
@@ -40,9 +59,10 @@ async function getControlEffectivenessByFramework(): Promise<Record<string, numb
 }
 
 export async function getCisoDashboard() {
-  const [postureMetric, incidents, cyberRisks, topCyberRisks, controlEffectivenessByFramework, regulatoryMetrics, mttd, mttr] =
+  const [postureMetric, postureHistory, incidents, cyberRisks, topCyberRisks, controlEffectivenessByFramework, regulatoryMetrics, mttd, mttr] =
     await Promise.all([
       getMetricByName("Security Posture Score"),
+      getMetricHistory("Security Posture Score"),
       query<{ severity: string; type: string }>("SELECT severity, type FROM incidents WHERE type = 'security'"),
       query(
         `SELECT r.* FROM risks r
@@ -61,8 +81,18 @@ export async function getCisoDashboard() {
     ]);
 
   const vulnerabilityMetrics = await query<MetricRow>(
-    "SELECT DISTINCT ON (name) * FROM metrics WHERE name ILIKE '%Vulnerabilities Open%' ORDER BY name, period_end DESC"
+    "SELECT DISTINCT ON (lower(name)) * FROM metrics WHERE name ILIKE '%Vulnerabilities Open%' ORDER BY lower(name), period_end DESC"
   );
+  // "critical vulnerabilities open" and "Critical Vulnerabilities Open" both chart as "Critical".
+  const severityLabel = (name: string) => {
+    const s = name.replace(/\s*vulnerabilities open\s*/i, "").trim().toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  // Most severe first; anything else after, alphabetically (the query's order).
+  const severityRank = (label: string) => {
+    const i = ["Critical", "High", "Medium", "Low"].indexOf(label);
+    return i === -1 ? 4 : i;
+  };
 
   const bySeverity = incidents.reduce<Record<string, number>>((acc, row) => {
     acc[row.severity] = (acc[row.severity] ?? 0) + 1;
@@ -73,11 +103,10 @@ export async function getCisoDashboard() {
 
   return {
     securityPostureScore,
-    securityPostureTrend: synthesizeTrend(securityPostureScore),
-    vulnerabilitiesByCriticality: vulnerabilityMetrics.map((m) => ({
-      severity: m.name.replace(" Vulnerabilities Open", ""),
-      count: toNumber(m.value),
-    })),
+    securityPostureTrend: postureHistory,
+    vulnerabilitiesByCriticality: vulnerabilityMetrics
+      .map((m) => ({ severity: severityLabel(m.name), count: toNumber(m.value) }))
+      .sort((a, b) => severityRank(a.severity) - severityRank(b.severity)),
     securityIncidentsSummary: {
       total: incidents.length,
       bySeverity,
@@ -92,9 +121,10 @@ export async function getCisoDashboard() {
 }
 
 export async function getCioDashboard() {
-  const [coreUptime, onlineUptime, mobileUptime, atmUptime, callCenter, changeFailureRate, cpu, memory, storage] =
+  const [coreUptime, coreUptimeHistory, onlineUptime, mobileUptime, atmUptime, callCenter, changeFailureRate, cpu, memory, storage] =
     await Promise.all([
       getMetricByName("Core Banking Uptime"),
+      getMetricHistory("Core Banking Uptime"),
       getMetricByName("Online Banking Uptime"),
       getMetricByName("Mobile Banking Uptime"),
       getMetricByName("ATM Availability"),
@@ -117,12 +147,10 @@ export async function getCioDashboard() {
     ),
   ]);
 
-  const coreUptimeValue = toNumber(coreUptime?.value);
-
   return {
     coreBankingUptime: {
-      current: coreUptimeValue,
-      trend: synthesizeTrend(coreUptimeValue, 6, 0.002, 100),
+      current: toNumber(coreUptime?.value),
+      trend: coreUptimeHistory,
     },
     channelPerformance: {
       online: toNumber(onlineUptime?.value),
@@ -230,9 +258,10 @@ export async function getCroDashboard() {
 }
 
 export async function getBoardDashboard() {
-  const [postureMetric, coreUptime, topRisks, lossEvents, openIssues, upcomingDeadlines] = await Promise.all([
+  const [postureMetric, coreUptime, coreUptimeHistory, topRisks, lossEvents, openIssues, upcomingDeadlines] = await Promise.all([
     getMetricByName("Security Posture Score"),
     getMetricByName("Core Banking Uptime"),
+    getMetricHistory("Core Banking Uptime"),
     query("SELECT * FROM risks ORDER BY residual_score DESC NULLS LAST LIMIT 5"),
     query<{ amount: string; date: string }>(
       "SELECT amount, date FROM loss_events WHERE date >= (CURRENT_DATE - INTERVAL '12 months')"
@@ -241,14 +270,13 @@ export async function getBoardDashboard() {
     getMetricByName("Upcoming Regulatory Deadlines"),
   ]);
 
-  const coreUptimeValue = toNumber(coreUptime?.value);
   const lossEventsLast12Months = lossEvents.reduce((sum, e) => sum + toNumber(e.amount), 0);
 
   return {
     overallSecurityPostureScore: toNumber(postureMetric?.value),
     coreBankingUptime: {
-      current: coreUptimeValue,
-      trend: synthesizeTrend(coreUptimeValue, 6, 0.002, 100),
+      current: toNumber(coreUptime?.value),
+      trend: coreUptimeHistory,
     },
     topEnterpriseRisks: topRisks,
     lossEventsLast12Months,

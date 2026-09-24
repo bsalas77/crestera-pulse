@@ -14,7 +14,14 @@ describe("useDashboard", () => {
   it("explains an unreachable API (no response)", async () => {
     const fetcher = vi.fn().mockRejectedValue(new AxiosError("Network Error"));
     const { result } = renderHook(() => useDashboard(fetcher));
-    await waitFor(() => expect(result.current.error).toMatch(/Can't reach the API.*PUBLIC_API_URL/));
+    await waitFor(() => expect(result.current.error).toMatch(/Can't reach Crestera Pulse.*docker compose ps/));
+  });
+
+  it("says the API is down when nginx answers 502 for it", async () => {
+    const err = new AxiosError("bad gateway", "ERR_BAD_RESPONSE", undefined, undefined, { status: 502 } as never);
+    const fetcher = vi.fn().mockRejectedValue(err);
+    const { result } = renderHook(() => useDashboard(fetcher));
+    await waitFor(() => expect(result.current.error).toMatch(/API isn't answering.*docker compose logs api/));
   });
 
   it("reports the HTTP status when the API returns an error", async () => {
