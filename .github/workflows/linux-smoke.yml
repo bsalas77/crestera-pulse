@@ -1,0 +1,23 @@
+name: Linux install smoke test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    # Always GitHub-hosted: a stock Ubuntu host with native Docker Engine.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Host environment
+        run: |
+          grep PRETTY_NAME /etc/os-release; uname -r; docker --version; node --version; umask
+      - name: Clean-install smoke test
+        run: bash .github/scripts/install-smoke.sh

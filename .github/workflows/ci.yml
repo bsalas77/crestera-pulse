@@ -5,12 +5,13 @@ on:
     branches: [main]
   pull_request:
 
-# Public repo: only pushes (maintainers) may use the self-hosted runner set via
-# the RUNNER repo variable; pull requests, including forks, always run on
-# GitHub-hosted runners.
+# The RUNNER repo variable selects a self-hosted runner. It is never used for
+# pull requests once the repo is public (a fork's PR would run its code on that
+# machine); PRs then fall back to GitHub-hosted runners. While the repo is
+# private, only collaborators can open PRs, so they may use the runner too.
 jobs:
   api:
-    runs-on: ${{ (github.event_name != 'pull_request' && vars.RUNNER) || 'ubuntu-latest' }}
+    runs-on: ${{ ((github.event_name != 'pull_request' || github.event.repository.private) && vars.RUNNER) || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: api
@@ -29,7 +30,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DB_HOST: ${{ (github.event_name != 'pull_request' && vars.RUNNER) && 'host.docker.internal' || 'localhost' }}
+      DB_HOST: ${{ (((github.event_name != 'pull_request' || github.event.repository.private) && vars.RUNNER) && 'host.docker.internal') || 'localhost' }}
       DB_PORT: 55433
       DB_USER: dashboard
       DB_PASS: ci-only-not-a-real-secret
@@ -63,7 +64,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
   ui:
-    runs-on: ${{ (github.event_name != 'pull_request' && vars.RUNNER) || 'ubuntu-latest' }}
+    runs-on: ${{ ((github.event_name != 'pull_request' || github.event.repository.private) && vars.RUNNER) || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: ui

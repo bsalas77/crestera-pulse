@@ -48,17 +48,19 @@ docker-compose.yml
 
 ## Running it
 
-You need Docker with Compose.
+You need Docker Engine with the Compose plugin (the `docker compose`
+command). If your install only has the older standalone `docker-compose`,
+use that instead — the commands are identical.
 
 ```bash
 cp .env.example .env
 # Open .env and fill in DB_PASS and JWT_SECRET (the file shows how to
 # generate them for Linux/macOS and Windows PowerShell).
 
-docker-compose up --build
+docker compose up --build
 ```
 
-`docker-compose` refuses to start while `DB_PASS` or `JWT_SECRET` is blank,
+`docker compose` refuses to start while `DB_PASS` or `JWT_SECRET` is blank,
 and the API refuses to boot if either still holds an example value — there
 is no working default secret, on purpose.
 
@@ -71,8 +73,8 @@ created. If you change `DB_PASS` afterwards, reset the volume (this deletes
 the database contents):
 
 ```bash
-docker-compose down -v
-docker-compose up --build
+docker compose down -v
+docker compose up --build
 ```
 
 The Postgres container runs `db/schema.sql` on first boot, then loads the
@@ -102,11 +104,11 @@ The demo mode above is for evaluation. To run this against your own
 institution's real data as a standing production dashboard:
 
 1. In `.env`, set `SEED_DEMO=false` **before the first boot** (or after,
-   followed by `docker-compose down -v` to reset the database — this
+   followed by `docker compose down -v` to reset the database — this
    deletes whatever's currently in it, so make sure that's what you want).
    With `SEED_DEMO=false` the schema comes up empty and no demo accounts
    exist — nothing is reachable until you do the next two steps.
-2. Start the database: `docker-compose up -d db`.
+2. Start the database: `docker compose up -d db`.
 3. Copy the templates in `db/templates/` and fill them in with your real
    organizations, assets, applications, risks, controls, incidents,
    loss events, and metrics. Each file's header row is the exact column
@@ -137,7 +139,7 @@ institution's real data as a standing production dashboard:
    Passwords must be at least 8 characters. Re-running `create` with the
    same username rotates that user's password. Roles: `CISO`, `CIO`, `CRO`,
    `BOARD`.
-6. From the repo root: `docker-compose up --build` — now serving your real
+6. From the repo root: `docker compose up --build` — now serving your real
    data, read-only.
 
 Dashboards only show what you've loaded: a metric your import didn't
@@ -156,7 +158,7 @@ people on a real host, set these in `.env` (see the commented block in
 | Variable | Purpose |
 |---|---|
 | `PUBLIC_UI_URL` | The URL people open in their browser, e.g. `https://pulse.example.com`. The API only accepts browser requests from this origin. |
-| `PUBLIC_API_URL` | The URL browsers use to reach the API, e.g. `https://pulse-api.example.com`. It is baked into the UI at build time, so run `docker-compose up --build` after changing it. |
+| `PUBLIC_API_URL` | The URL browsers use to reach the API, e.g. `https://pulse-api.example.com`. It is baked into the UI at build time, so run `docker compose up --build` after changing it. |
 | `TRUST_PROXY` | Number of reverse proxies in front of the API (`1` for one nginx/Caddy). Without it the login rate limiter sees every user as the proxy's IP. |
 | `CRESTERA_URL` | Optional link target for the "Powered by Crestera" panel. Leave unset for no link. |
 
@@ -204,7 +206,7 @@ every table** in the database it's pointed at and reloads the demo data, so
 it refuses to run unless the database is named `*_test` (or you set
 `ALLOW_DB_RESET=true`). Create a throwaway database for it, for example
 with the Compose database running:
-`docker-compose exec db createdb -U dashboard dashboard_test`.
+`docker compose exec db createdb -U dashboard dashboard_test`.
 
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests, build, and
 `npm audit` for both `api` and `ui` on every push/PR.

@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    build: ./db
     environment:
       POSTGRES_USER: ${DB_USER:-dashboard}
       POSTGRES_PASSWORD: ${DB_PASS:?Set DB_PASS in your .env file (copy .env.example)}
@@ -8,9 +8,6 @@ services:
       SEED_DEMO: ${SEED_DEMO:-true}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./db/init/02-seed.sh:/docker-entrypoint-initdb.d/02-seed.sh
-      - ./db/seed.sql:/seed-source/seed.sql
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
