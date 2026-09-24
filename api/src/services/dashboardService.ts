@@ -14,7 +14,10 @@ interface MetricRow {
 }
 
 async function getMetricByName(name: string): Promise<MetricRow | null> {
-  return queryOne<MetricRow>("SELECT * FROM metrics WHERE name = $1 LIMIT 1", [name]);
+  // Most recent period wins, so importing several months of history still shows the latest.
+  return queryOne<MetricRow>("SELECT * FROM metrics WHERE name = $1 ORDER BY period_end DESC, period_start DESC LIMIT 1", [
+    name,
+  ]);
 }
 
 /** Average control effectiveness_score per framework — shared by the CISO and CRO views. */
@@ -58,7 +61,7 @@ export async function getCisoDashboard() {
     ]);
 
   const vulnerabilityMetrics = await query<MetricRow>(
-    "SELECT * FROM metrics WHERE name ILIKE '%Vulnerabilities Open%' ORDER BY name"
+    "SELECT DISTINCT ON (name) * FROM metrics WHERE name ILIKE '%Vulnerabilities Open%' ORDER BY name, period_end DESC"
   );
 
   const bySeverity = incidents.reduce<Record<string, number>>((acc, row) => {

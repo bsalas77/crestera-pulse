@@ -10,3 +10,7 @@ COPY seed.sql /seed-source/seed.sql
 RUN chmod 0644 /docker-entrypoint-initdb.d/01-schema.sql \
     /docker-entrypoint-initdb.d/02-seed.sh \
     /seed-source/seed.sql
+
+# Belt and braces for checkouts that converted line endings: the entrypoint
+# sources this script, so a stray CR would break it.
+RUN sed -i 's/\r$//' /docker-entrypoint-initdb.d/02-seed.sh

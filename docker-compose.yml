@@ -31,6 +31,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "8000:8000"
     healthcheck:
@@ -49,8 +56,15 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "3000:3000"
+      - "3000:8080"
 
 volumes:
   db_data:

@@ -100,3 +100,24 @@ describe("GET /dashboard/ciso shape", () => {
     });
   });
 });
+
+describe("metric history", () => {
+  const insert = (value: number, start: string, end: string) =>
+    pool.query(
+      `INSERT INTO metrics (name, category, role_relevance, value, unit, period_start, period_end)
+       VALUES ('Security Posture Score', 'security', ARRAY['CISO','BOARD'], $1, 'score', $2, $3)`,
+      [value, start, end]
+    );
+  const posture = async () => {
+    const token = await loginAs("ciso");
+    const res = await request(app).get("/dashboard/ciso").set("Authorization", `Bearer ${token}`);
+    return res.body.securityPostureScore as number;
+  };
+
+  it("shows the most recent period when several are imported, not an arbitrary one", async () => {
+    await insert(10, "2025-01-01", "2025-01-31"); // older than the seeded 2026-08 value of 78
+    expect(await posture()).toBe(78);
+    await insert(91, "2026-09-01", "2026-09-30"); // newer
+    expect(await posture()).toBe(91);
+  });
+});

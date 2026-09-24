@@ -117,7 +117,8 @@ CREATE TABLE metric_dimensions (
   PRIMARY KEY (metric_id, key, value)
 );
 
--- Demo users (MVP auth; plain-text passwords, demo only)
+-- Application logins. `password` holds a bcrypt hash, never plain text;
+-- create real users with `npm run manage-users` (see README).
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username TEXT NOT NULL UNIQUE,
