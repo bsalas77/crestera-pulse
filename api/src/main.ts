@@ -10,7 +10,8 @@ if (report.errors.length > 0) {
   for (const error of report.errors) {
     console.error(`[env] ${error}`);
   }
-  throw new Error("Refusing to start with invalid production configuration.");
+  console.error("Refusing to start with invalid production configuration. Fix the values above in your .env file.");
+  process.exit(1);
 }
 
 const app = createApp();
