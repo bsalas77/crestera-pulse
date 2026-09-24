@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
 import { BarChart } from "../components/BarChart";
 import { MetricCard } from "../components/MetricCard";
 import { Table } from "../components/Table";
 import { TimeSeriesChart } from "../components/TimeSeriesChart";
+import { ErrorPanel } from "../components/ErrorPanel";
+import { useDashboard } from "../hooks/useDashboard";
 import { getCioDashboard } from "../services/api";
 
 interface Application {
@@ -25,17 +26,10 @@ interface CioData {
 }
 
 export function CioDashboard() {
-  const [data, setData] = useState<CioData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, error, retry } = useDashboard<CioData>(getCioDashboard);
 
-  useEffect(() => {
-    getCioDashboard().then((d) => {
-      setData(d);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading || !data) return <div className="loading">Loading CIO dashboard...</div>;
+  if (error) return <ErrorPanel message={error} onRetry={retry} />;
+  if (!data) return <div className="loading">Loading CIO dashboard...</div>;
 
   return (
     <div className="dashboard">

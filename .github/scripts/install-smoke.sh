@@ -70,6 +70,14 @@ check "cio is blocked from /dashboard/ciso (403)" test "$(code localhost:8000/da
 check "no token is rejected (401)" test "$(code localhost:8000/assets)" = 401
 check "API runs with NODE_ENV=production" test "$(dc exec -T api printenv NODE_ENV | tr -d '\r')" = production
 check "Postgres is published on 127.0.0.1 only" bash -c "$DC -p $PROJECT port db 5432 | grep -q '^127\\.0\\.0\\.1:'"
+UIH=$(curl -sI localhost:3000/ | tr -d '\r')
+check "UI sends a Content-Security-Policy" grep -qi '^content-security-policy:' <<<"$UIH"
+check "UI sends X-Frame-Options: DENY" grep -qi '^x-frame-options: DENY' <<<"$UIH"
+for svc in api ui; do
+  cid=$(dc ps -q "$svc")
+  check "$svc container: non-root, read-only filesystem, all capabilities dropped" bash -c "docker inspect $cid --format '{{.Config.User}}|{{.HostConfig.ReadonlyRootfs}}|{{.HostConfig.CapDrop}}' | grep -qE '^(node|101)[|]true[|]\\[ALL\\]\$'"
+done
+check "the API filesystem really is read-only" bash -c "! $DC -p $PROJECT exec -T api sh -c 'touch /probe' 2>/dev/null"
 rl=""; for _ in $(seq 1 10); do rl="$rl $(code -X POST localhost:8000/auth/login -H "$JSON" -d '{"username":"x","password":"y"}')"; done
 check "login rate limit trips (429)" grep -q 429 <<<"$rl"
 
@@ -103,6 +111,7 @@ printf 'PUBLIC_UI_URL=http://127.0.0.1:3000\nPUBLIC_API_URL=http://127.0.0.1:800
 dc up --build -d >/dev/null 2>&1
 check "stack restarts with the new URLs" wait_for http://127.0.0.1:8000/health
 check "UI is up on the new origin" ui_up http://127.0.0.1:3000/
+check "UI Content-Security-Policy allows the configured API origin" bash -c "curl -sI http://127.0.0.1:3000/ | grep -i '^content-security-policy' | grep -qF \"connect-src 'self' http://127.0.0.1:8000\""
 check "CORS allows the configured origin" bash -c "curl -sI -H 'Origin: http://127.0.0.1:3000' http://127.0.0.1:8000/health | grep -qi '^access-control-allow-origin: http://127.0.0.1:3000'"
 check "UI bundle targets the configured API URL" bash -c "curl -s http://127.0.0.1:3000/ | grep -o 'assets/[^\"]*\\.js' | head -1 | xargs -I{} curl -s http://127.0.0.1:3000/{} | grep -q 'http://127.0.0.1:8000'"
 

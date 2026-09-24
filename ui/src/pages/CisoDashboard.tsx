@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
 import { BarChart } from "../components/BarChart";
 import { MetricCard } from "../components/MetricCard";
 import { Table } from "../components/Table";
 import { TimeSeriesChart } from "../components/TimeSeriesChart";
+import { ErrorPanel } from "../components/ErrorPanel";
+import { useDashboard } from "../hooks/useDashboard";
 import { getCisoDashboard } from "../services/api";
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -33,17 +34,10 @@ interface CisoData {
 }
 
 export function CisoDashboard() {
-  const [data, setData] = useState<CisoData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, error, retry } = useDashboard<CisoData>(getCisoDashboard);
 
-  useEffect(() => {
-    getCisoDashboard().then((d) => {
-      setData(d);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading || !data) return <div className="loading">Loading CISO dashboard...</div>;
+  if (error) return <ErrorPanel message={error} onRetry={retry} />;
+  if (!data) return <div className="loading">Loading CISO dashboard...</div>;
 
   return (
     <div className="dashboard">

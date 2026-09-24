@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
 import { Heatmap } from "../components/Heatmap";
 import { MetricCard } from "../components/MetricCard";
 import { TimeSeriesChart } from "../components/TimeSeriesChart";
+import { ErrorPanel } from "../components/ErrorPanel";
+import { useDashboard } from "../hooks/useDashboard";
 import { getBoardDashboard } from "../services/api";
 
 interface Risk {
@@ -21,17 +22,10 @@ interface BoardData {
 }
 
 export function BoardDashboard() {
-  const [data, setData] = useState<BoardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, error, retry } = useDashboard<BoardData>(getBoardDashboard);
 
-  useEffect(() => {
-    getBoardDashboard().then((d) => {
-      setData(d);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading || !data) return <div className="loading">Loading Board dashboard...</div>;
+  if (error) return <ErrorPanel message={error} onRetry={retry} />;
+  if (!data) return <div className="loading">Loading Board dashboard...</div>;
 
   return (
     <div className="dashboard">

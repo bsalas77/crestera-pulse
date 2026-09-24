@@ -343,3 +343,17 @@ body {
   color: #94a3b8;
   text-align: center;
 }
+
+.error-panel p {
+  color: #475569;
+  line-height: 1.5;
+}
+
+.error-panel button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}

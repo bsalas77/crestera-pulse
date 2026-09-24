@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
 import { BarChart } from "../components/BarChart";
 import { Heatmap } from "../components/Heatmap";
 import { MetricCard } from "../components/MetricCard";
 import { Table } from "../components/Table";
 import { TimeSeriesChart } from "../components/TimeSeriesChart";
+import { ErrorPanel } from "../components/ErrorPanel";
+import { useDashboard } from "../hooks/useDashboard";
 import { getCroDashboard } from "../services/api";
 
 interface Risk {
@@ -36,17 +37,10 @@ interface CroData {
 }
 
 export function CroDashboard() {
-  const [data, setData] = useState<CroData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, error, retry } = useDashboard<CroData>(getCroDashboard);
 
-  useEffect(() => {
-    getCroDashboard().then((d) => {
-      setData(d);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading || !data) return <div className="loading">Loading CRO dashboard...</div>;
+  if (error) return <ErrorPanel message={error} onRetry={retry} />;
+  if (!data) return <div className="loading">Loading CRO dashboard...</div>;
 
   const frameworkBars = Object.entries(data.controlEffectiveness.averageByFramework).map(([label, value]) => ({
     label,
