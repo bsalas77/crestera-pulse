@@ -10,7 +10,10 @@ FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+# Copied files keep the build host's permissions; on a hardened server
+# (umask 027) package.json would be unreadable to the non-root runtime user and
+# Node refuses to start ("Cannot read package config").
+RUN chmod 0644 package.json package-lock.json && npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 
 USER node
