@@ -15,6 +15,7 @@ import { env } from "../config/env";
 import { pool } from "../db/pool";
 import { describeDbError } from "../db/dbErrors";
 import { migrate } from "../db/migrate";
+import { firstLineOfInput } from "./secretInput";
 
 const ROLES = ["CISO", "CIO", "CRO", "BOARD"];
 const USAGE =
@@ -38,7 +39,7 @@ function readSecret(prompt: string): Promise<string> {
       let data = "";
       const done = () => {
         stdin.pause();
-        resolve(data.split(/\r\n|\r|\n/)[0] ?? "");
+        resolve(firstLineOfInput(data));
       };
       stdin.setEncoding("utf8");
       stdin.on("data", (chunk) => {
