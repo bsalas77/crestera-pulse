@@ -1,0 +1,36 @@
+# Weekly update PRs for everything Pulse ships: npm packages, Docker base images and CI actions.
+# CI runs on each PR; nothing merges by itself.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      api-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /ui
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      ui-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: [/api, /ui, /db]
+    schedule:
+      interval: weekly
+    ignore:
+      # A new Postgres major can't open an existing install's data directory
+      # without a dump and restore, so it must be a deliberate, documented upgrade.
+      - dependency-name: postgres
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
