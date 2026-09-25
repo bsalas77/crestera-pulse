@@ -29,7 +29,7 @@
     "jsdom": "^25.0.0",
     "serve": "^14.2.3",
     "typescript": "^5.5.3",
-    "typescript-eslint": "^8.3.0",
+    "typescript-eslint": "^8.70.1",
     "vite": "^5.4.2",
     "vitest": "^2.0.5"
   }
