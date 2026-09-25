@@ -48,7 +48,7 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(username, password);
+      await login(username.trim(), password);
       navigate("/", { replace: true });
     } catch (err) {
       setError(describeLoginError(err));
@@ -64,11 +64,27 @@ export function LoginPage() {
         <p className="login-subtitle">Free executive risk preview — sign in to view your role-specific dashboard</p>
         <label>
           Username
-          <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+          {/* Phone keyboards would otherwise capitalise "board" to "Board", and usernames are case-sensitive. */}
+          <input
+            name="username"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoFocus
+          />
         </label>
         <label>
           Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </label>
         {error && <div className="login-error">{error}</div>}
         <button type="submit" disabled={submitting}>

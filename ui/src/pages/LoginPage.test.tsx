@@ -61,6 +61,17 @@ describe("LoginPage", () => {
     expect(loginMock).toHaveBeenCalledWith("board", "password");
   });
 
+  it("keeps phone keyboards from capitalising the username, and ignores stray spaces", async () => {
+    loginMock.mockResolvedValueOnce({ token: "fake" });
+    renderLoginPage();
+    const input = screen.getByLabelText("Username");
+    expect(input).toHaveAttribute("autocapitalize", "none");
+    expect(input).toHaveAttribute("autocomplete", "username");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "current-password");
+    await submit(" board ", "password");
+    expect(loginMock).toHaveBeenCalledWith("board", "password");
+  });
+
   it("says the password is wrong on a 401", async () => {
     loginMock.mockRejectedValueOnce(httpError(401));
     renderLoginPage();
