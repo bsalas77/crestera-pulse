@@ -60,7 +60,13 @@ export function LoginPage() {
   return (
     <div className="login-screen">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>Crestera Pulse</h1>
+        <div className="login-brand">
+          <span className="app-tile">CP</span>
+          <div>
+            <h1>Crestera Pulse</h1>
+            <div className="login-brand-sub">Executive risk dashboard</div>
+          </div>
+        </div>
         <p className="login-subtitle">Free executive risk preview — sign in to view your role-specific dashboard</p>
         <label>
           Username

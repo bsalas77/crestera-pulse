@@ -77,7 +77,8 @@ describe("App routing", () => {
 
   it("shows only the CIO nav link for a CIO user", () => {
     renderAt("/cio-dashboard", "CIO");
-    expect(screen.getByText("CIO Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("Board Dashboard")).not.toBeInTheDocument();
+    // The page title repeats the dashboard's name, so ask for the nav links.
+    expect(screen.getByRole("link", { name: "CIO Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Board Dashboard" })).not.toBeInTheDocument();
   });
 });
