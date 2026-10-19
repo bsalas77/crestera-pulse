@@ -64,7 +64,7 @@ services:
     build:
       context: ./ui
       args:
-        VITE_CRESTERA_URL: ${CRESTERA_URL:-}
+        VITE_CRESTERA_URL: ${CRESTERA_URL-https://github.com/bsalas77}
     restart: unless-stopped
     depends_on:
       api:
