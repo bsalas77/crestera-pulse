@@ -5,7 +5,8 @@ it, please report it privately so it can be fixed before it is discussed
 publicly.
 
 **How to report:** use this repository's **Security** tab → **Report a
-vulnerability** (GitHub private vulnerability reporting). Please include what
+vulnerability** (GitHub private vulnerability reporting), or e-mail
+**barry.salas@gmail.com**. Please include what
 you found, the steps or a proof of concept to reproduce it, and the version
 (commit) you tested. Do not open a public issue for a vulnerability.
 
