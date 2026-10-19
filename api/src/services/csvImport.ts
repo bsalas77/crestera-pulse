@@ -183,7 +183,7 @@ export function readTable(content: string, table: string): RawRow[] {
       info: true,
     }) as { record: RawRow; info: { lines: number } }[];
   } catch (err) {
-    throw new Error(`${file}: couldn't read the file as CSV — ${(err as Error).message}`);
+    throw new Error(`${file}: couldn't read the file as CSV — ${(err as Error).message}`, { cause: err });
   }
 
   const unknown = headers.filter((h) => h && !spec.columns.includes(h));
