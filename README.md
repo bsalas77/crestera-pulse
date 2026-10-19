@@ -9,6 +9,10 @@ incident and loss data:
 - **CRO**: enterprise and financial risk
 - **Board**: a summary across all three
 
+Part of the Crestera family with [Crestera Scan](https://github.com/bsalas77/crestera-scan)
+(network discovery) and [Crestera Watch](https://github.com/bsalas77/crestera-watch)
+(SIEM); it needs neither.
+
 ## What this is (and isn't)
 
 Crestera Pulse is a **free, self-hosted tool** from the makers of Crestera,
