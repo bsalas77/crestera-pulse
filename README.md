@@ -461,4 +461,4 @@ header.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Third-party notices: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Free for your own organization's internal use, including commercial use. It may not be resold, rebranded or hosted for others, and the "Powered by Crestera" notice stays. See [LICENSE](LICENSE). Third-party notices: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

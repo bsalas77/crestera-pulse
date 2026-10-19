@@ -1,6 +1,6 @@
 {
   "name": "dashboard-api",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Executive dashboard API for CISO/CIO/CRO/Board views",
   "main": "dist/main.js",
@@ -42,5 +42,6 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "license": "SEE LICENSE IN ../LICENSE"
 }
