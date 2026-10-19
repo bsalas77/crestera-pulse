@@ -40,7 +40,7 @@ export function TimeSeriesChart({
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
         <XAxis dataKey="period" tick={{ fontSize: 12 }} />
         <YAxis tick={{ fontSize: 12 }} domain={zoom ? ["auto", "auto"] : [0, "auto"]} />
-        <Tooltip formatter={(value: number) => [`${value}${unit}`, "Value"]} />
+        <Tooltip formatter={(value) => [`${value ?? ""}${unit}`, "Value"]} />
         <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={{ r: 3 }} />
       </LineChart>
     </ResponsiveContainer>

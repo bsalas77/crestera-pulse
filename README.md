@@ -390,7 +390,7 @@ What's in place:
 - **Containers:**
   - The app containers run as non-root, with read-only filesystems, all
     Linux capabilities dropped and `no-new-privileges`.
-  - Images are built from Node 24 LTS, nginx and Postgres 16, with
+  - Images are built from Node 26 LTS, nginx and Postgres 16, with
     lockfile-exact installs.
 - **Browser:** the UI sends a strict Content-Security-Policy,
   `X-Frame-Options: DENY`, `nosniff` and `no-referrer`. It loads nothing
@@ -409,7 +409,7 @@ Report a vulnerability as described in [SECURITY.md](SECURITY.md).
 
 ## Development
 
-To work on the code outside Docker you need Node.js 22 or newer.
+To work on the code outside Docker you need Node.js 22.22 or newer (26 recommended).
 
 ```bash
 # database only, published on 127.0.0.1:5432 for local tools and tests
