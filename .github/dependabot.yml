@@ -1,5 +1,11 @@
 # Weekly update PRs for everything Pulse ships: npm packages, Docker base images and CI actions.
 # CI runs on each PR; nothing merges by itself.
+#
+# Some majors need their own planned upgrade rather than a weekly bump, so
+# Dependabot leaves them alone (security updates still arrive):
+# TypeScript 7 is a new compiler; React 19 must move react and react-dom
+# together; Vite 8 needs the next major of the React plugin; @types/node and
+# the Node images follow the Node LTS line (24 until Node 26 becomes LTS).
 version: 2
 updates:
   - package-ecosystem: npm
@@ -10,6 +16,11 @@ updates:
     groups:
       api-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: npm
     directory: /ui
@@ -19,6 +30,19 @@ updates:
     groups:
       ui-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+      - dependency-name: react-dom
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/react"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/react-dom"
+        update-types: [version-update:semver-major]
+      - dependency-name: vite
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
     directories: [/api, /ui, /db]
@@ -28,6 +52,8 @@ updates:
       # A new Postgres major can't open an existing install's data directory
       # without a dump and restore, so it must be a deliberate, documented upgrade.
       - dependency-name: postgres
+        update-types: [version-update:semver-major]
+      - dependency-name: node
         update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions

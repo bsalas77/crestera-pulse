@@ -14,7 +14,7 @@ RUN npm run build
 # configured (CSP connect-src). A malformed absolute URL fails the build here.
 RUN node -e "const fs=require('fs');const u=process.env.VITE_API_URL;const o=/^https?:/i.test(u)?' '+new URL(u).origin:'';fs.writeFileSync('security-headers.conf',fs.readFileSync('security-headers.conf.template','utf8').replace(' __API_ORIGIN__',o))"
 
-FROM nginxinc/nginx-unprivileged:1.30-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 COPY --from=build --chmod=0644 /app/nginx.conf.template /etc/nginx/conf.d/default.conf
 COPY --from=build --chmod=0644 /app/security-headers.conf /etc/nginx/conf.d/security-headers.inc
 COPY --from=build /app/dist /usr/share/nginx/html
