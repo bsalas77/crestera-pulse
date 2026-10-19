@@ -1,12 +1,16 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { MainLayout } from "./layouts/MainLayout";
-import { BoardDashboard } from "./pages/BoardDashboard";
-import { CioDashboard } from "./pages/CioDashboard";
-import { CisoDashboard } from "./pages/CisoDashboard";
-import { CroDashboard } from "./pages/CroDashboard";
 import { LoginPage } from "./pages/LoginPage";
 import { ProtectedRoute } from "./pages/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
+
+// Each dashboard (and the charting library behind it) loads when it is first
+// opened, so the sign-in page stays small.
+const CisoDashboard = lazy(() => import("./pages/CisoDashboard").then((m) => ({ default: m.CisoDashboard })));
+const CioDashboard = lazy(() => import("./pages/CioDashboard").then((m) => ({ default: m.CioDashboard })));
+const CroDashboard = lazy(() => import("./pages/CroDashboard").then((m) => ({ default: m.CroDashboard })));
+const BoardDashboard = lazy(() => import("./pages/BoardDashboard").then((m) => ({ default: m.BoardDashboard })));
 
 function HomeRedirect() {
   const { role } = useAuth();
@@ -34,7 +38,9 @@ export default function App() {
           path="ciso-dashboard"
           element={
             <ProtectedRoute allow={["CISO", "BOARD"]}>
-              <CisoDashboard />
+              <Suspense fallback={<div className="loading">Loading…</div>}>
+                <CisoDashboard />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -42,7 +48,9 @@ export default function App() {
           path="cio-dashboard"
           element={
             <ProtectedRoute allow={["CIO", "BOARD"]}>
-              <CioDashboard />
+              <Suspense fallback={<div className="loading">Loading…</div>}>
+                <CioDashboard />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -50,7 +58,9 @@ export default function App() {
           path="cro-dashboard"
           element={
             <ProtectedRoute allow={["CRO", "BOARD"]}>
-              <CroDashboard />
+              <Suspense fallback={<div className="loading">Loading…</div>}>
+                <CroDashboard />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -58,7 +68,9 @@ export default function App() {
           path="board-dashboard"
           element={
             <ProtectedRoute allow={["BOARD"]}>
-              <BoardDashboard />
+              <Suspense fallback={<div className="loading">Loading…</div>}>
+                <BoardDashboard />
+              </Suspense>
             </ProtectedRoute>
           }
         />
