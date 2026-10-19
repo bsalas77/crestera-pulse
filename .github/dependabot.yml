@@ -3,9 +3,8 @@
 #
 # Some majors need their own planned upgrade rather than a weekly bump, so
 # Dependabot leaves them alone (security updates still arrive):
-# TypeScript 7 is a new compiler; React 19 must move react and react-dom
-# together; Vite 8 needs the next major of the React plugin; @types/node and
-# the Node images follow the Node LTS line (24 until Node 26 becomes LTS).
+# TypeScript 7 waits until typescript-eslint supports it (8.x stops at 6.0);
+# @types/node and the Node images follow the Node LTS line (26 since October 2026).
 version: 2
 updates:
   - package-ecosystem: npm
@@ -32,16 +31,6 @@ updates:
         update-types: [minor, patch]
     ignore:
       - dependency-name: typescript
-        update-types: [version-update:semver-major]
-      - dependency-name: react
-        update-types: [version-update:semver-major]
-      - dependency-name: react-dom
-        update-types: [version-update:semver-major]
-      - dependency-name: "@types/react"
-        update-types: [version-update:semver-major]
-      - dependency-name: "@types/react-dom"
-        update-types: [version-update:semver-major]
-      - dependency-name: vite
         update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
